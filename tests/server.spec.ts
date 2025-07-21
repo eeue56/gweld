@@ -186,7 +186,7 @@ test("blocks path traversal attempt", async ({ request }) => {
   expect(response?.status()).toBe(404);
 });
 
-test("rejects access to files outside served root", async ({ request }) => {
+test("blocks access to files outside served root", async ({ request }) => {
   const response = await request.get(
     "http://localhost:8000/../../../../../../etc/hosts"
   );

@@ -1,18 +1,24 @@
 {
-  "name": "gweld",
-  "version": "1.0.0",
+  "name": "@eeue56/gweld",
+  "version": "0.0.1",
   "description": "A very minimal SimpleHttpServer alternative in Node.js with live-reload",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "tsc --noEmit && npx playwright test"
+    "test": "tsc --noEmit && npx playwright test",
+    "prepublish": "tsc src/index.ts --outDir dist"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eeue56/gweld.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "http.server",
+    "SimpleHttpServer",
+    "live reload",
+    "http server"
+  ],
+  "author": "eeue56",
+  "license": "BSD-3-Clause",
   "type": "module",
   "bugs": {
     "url": "https://github.com/eeue56/gweld/issues"
