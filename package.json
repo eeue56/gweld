@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A very minimal SimpleHttpServer alternative in Node.js with live-reload",
   "main": "dist/index.js",
+  "bin": "dist/index.js",
   "scripts": {
     "test": "tsc --noEmit && npx playwright test",
     "prepublish": "tsc"
