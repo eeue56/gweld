@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createReadStream, watch } from "fs";
 import { readdir, readFile } from "fs/promises";
 import * as http from "http";
@@ -58,7 +60,7 @@ const console = globalThis.console as Console;
 async function main() {
   if (process.argv.length < 3) {
     console.error("Not enough arguments!");
-    console.log(`Usage: ${process.argv.join(" ")} folder [PORT]`);
+    console.log(`Usage: @eeue56/gweld folder [PORT]`);
     return;
   }
 

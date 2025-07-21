@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "tsc --noEmit && npx playwright test",
-    "prepublish": "tsc src/index.ts --outDir dist"
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
