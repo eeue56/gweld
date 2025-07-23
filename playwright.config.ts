@@ -40,5 +40,6 @@ export default defineConfig({
     command: "node --experimental-strip-types src/index.ts tests/fixtures 8000",
     url: "http://localhost:8000/",
     reuseExistingServer: false,
+    stderr: "ignore",
   },
 });

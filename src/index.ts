@@ -97,6 +97,8 @@ async function main() {
     `(${filesKnownToExist.size} files)...`
   );
 
+  let connectionCount = 0;
+
   /**
    * Handle each request as they come in - logging the url
    * and the time taken to respond
@@ -105,14 +107,22 @@ async function main() {
     req: http.IncomingMessage,
     res: http.ServerResponse<http.IncomingMessage>
   ): Promise<null> {
+    connectionCount++;
+
+    const label =
+      `id: ${connectionCount}, ` +
+      green(new Date().toLocaleString("en-GB")) +
+      " " +
+      (req.url || "/");
+
     // start a timer for this request
-    console.time(req.url || "/");
+    console.time(label);
 
     // Only support get requests and drop any request without a url
     if (req.method != "GET" || !req.url) {
       res.statusCode = 503;
       res.end();
-      return console.timeEnd(req.url || "/");
+      return console.timeEnd(label);
     }
 
     // this is the event source handler - used to provide live-reload
@@ -124,7 +134,7 @@ async function main() {
       };
       res.writeHead(200, headers);
       eventSourceConnections.push(res);
-      return console.timeEnd(req.url);
+      return console.timeEnd(label);
     }
 
     // avoid parsing urls ourselves, just use URL
@@ -143,7 +153,7 @@ async function main() {
       console.log("Illegal access request to", resolvedPath);
       res.statusCode = 403;
       res.end();
-      return console.timeEnd(req.url);
+      return console.timeEnd(label);
     }
 
     if (!filesKnownToExist.get(resolvedPath)) {
@@ -151,7 +161,7 @@ async function main() {
       res.setHeader("Content-Length", 0);
       res.statusCode = 404;
       res.end();
-      return console.timeEnd(req.url);
+      return console.timeEnd(label);
     }
 
     res.setHeader("Keep-Alive", 10);
@@ -166,18 +176,18 @@ async function main() {
         let file = await readFile(resolvedPath, "utf-8");
         file = addLiveUpdateToHtml(file);
         Readable.from(file).pipe(brotliCompress).pipe(res);
-        return console.timeEnd(req.url);
+        return console.timeEnd(label);
       } else {
         const readStream = createReadStream(resolvedPath, "utf-8");
         const compressed = readStream.pipe(brotliCompress);
         compressed.pipe(res);
-        return console.timeEnd(req.url);
+        return console.timeEnd(label);
       }
     } catch (e) {
       console.error(e);
       res.statusCode = 503;
       res.end();
-      return console.timeEnd(req.url);
+      return console.timeEnd(label);
     }
   }
 
