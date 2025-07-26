@@ -405,8 +405,6 @@ async function main() {
         const start = Number(range.replace(/\D/g, ""));
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 
-        console.log("Start, end", range, start, end);
-
         // Create headers
         const contentLength = end - start + 1;
         const headers = {
@@ -415,8 +413,6 @@ async function main() {
           "Content-Length": contentLength,
           "Content-Type": mimeType,
         };
-
-        console.log("headers");
 
         // HTTP Status 206 for Partial Content
         res.writeHead(206, headers);
