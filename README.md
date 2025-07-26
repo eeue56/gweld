@@ -9,6 +9,8 @@ Supports:
 - Video streaming
 - Very quick
 
+[Screen recording 2025-07-26 17.57.58.webm](https://github.com/user-attachments/assets/a254a0fc-9840-405d-a6fe-2f44f39d19ec)
+
 # Install
 
 ```
