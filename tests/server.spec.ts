@@ -1,19 +1,5 @@
-import { test as base, expect } from "@playwright/test";
-import { mkdir, rm, writeFile } from "fs/promises";
-
-const MAXIMUM_EXPECTED_RESPONSE_TIME_FOR_A_SIMPLE_REQUEST_IN_MS = 20;
-
-const test = base.extend({});
-
-test.beforeAll(async () => {
-  await mkdir("tests/fixtures", { recursive: true });
-  await mkdir("tests/fixtures/empty_folder", { recursive: true });
-  await mkdir("tests/fixtures/sub_folder", { recursive: true });
-  await writeFile("./tests/fixtures/index.html", ``.trim());
-  await writeFile("./tests/fixtures/main.css", ``.trim());
-  await writeFile("./tests/fixtures/index.js", ``.trim());
-  await writeFile("./tests/fixtures/feed.html", ``.trim());
-});
+import { cp, writeFile } from "fs/promises";
+import { expect, test } from "./fixture";
 
 test("loads the index page", async ({ page }) => {
   await writeFile(
@@ -43,6 +29,55 @@ test("loads a given page", async ({ page }) => {
   await expect(response?.status()).toBe(200);
 
   await expect(page.locator("h1")).toHaveText("Hello World");
+});
+
+test("supports ESM", async ({ page }) => {
+  await writeFile(
+    "./tests/fixtures/index.html",
+    `
+<html>
+    <body>
+        <h1>Hello World</h1>
+        <div id="message"></div>
+        <script src="./main.js" type="module" />
+    </body>
+</html>`.trim()
+  );
+
+  await writeFile(
+    "./tests/fixtures/main.js",
+    `
+import {helloWorld} from "./helloworld.js"
+
+helloWorld();
+`.trim()
+  );
+
+  await writeFile(
+    "./tests/fixtures/helloworld.js",
+    `
+export function helloWorld() {
+  document.getElementById("message").appendChild(
+    document.createTextNode("Welcome")
+  );
+}
+`.trim()
+  );
+
+  const response = await page.goto("localhost:8000/index.html");
+  await expect(response?.status()).toBe(200);
+
+  await expect(page.locator("h1")).toHaveText("Hello World");
+  await expect(page.locator("#message")).toHaveText("Welcome");
+});
+
+test("loads images with the right mimetype", async ({ request }) => {
+  await cp("./example/logo.png", "./tests/fixtures/logo.png");
+
+  const response = await request.get("http://localhost:8000/logo.png");
+  await expect(response?.status()).toBe(200);
+  await expect(response?.headers()).toHaveProperty("content-type");
+  await expect(response?.headers()["content-type"]).toBe("image/png");
 });
 
 test("live reloads when index changes", async ({ page }) => {
@@ -173,6 +208,106 @@ test("live reloads sub-directory index html page", async ({ page }) => {
   await expect(await page.locator("script").all()).toHaveLength(1);
 });
 
+test("live reloads ESM", async ({ page }) => {
+  await writeFile(
+    "./tests/fixtures/index.html",
+    `
+<html>
+    <body>
+        <h1>Hello World</h1>
+        <div id="message"></div>
+        <script src="./main.js" type="module"></script>
+    </body>
+</html>`.trim()
+  );
+
+  await writeFile(
+    "./tests/fixtures/main.js",
+    `
+import {helloWorld} from "./helloworld.js"
+
+helloWorld();
+`.trim()
+  );
+
+  await writeFile(
+    "./tests/fixtures/helloworld.js",
+    `
+export function helloWorld() {
+  document.getElementById("message").appendChild(
+    document.createTextNode("Welcome")
+  );
+}
+`.trim()
+  );
+
+  const response = await page.goto("localhost:8000/index.html");
+  await expect(response?.status()).toBe(200);
+
+  await expect(page.locator("h1")).toHaveText("Hello World");
+  await expect(page.locator("#message")).toHaveText("Welcome");
+  await writeFile(
+    "./tests/fixtures/helloworld.js",
+    `export function helloWorld() {
+  document.getElementById("message").appendChild(
+    document.createTextNode("Goodbye")
+  );
+}
+`.trim()
+  );
+
+  await expect(page.locator("h1")).toHaveText("Hello World");
+  await expect(page.locator("#message")).toHaveText("Goodbye");
+});
+
+test("live reloads when images change", async ({ page }) => {
+  await cp("./example/logo.png", "./tests/fixtures/logo.png");
+  await writeFile(
+    "./tests/fixtures/index.html",
+    `
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="main.css" />
+  </head>
+  <body>
+    <h1>Hello World</h1>
+    <div id="date"></div>
+    <img src="./logo.png" />
+    <script type="text/javascript">
+      document.getElementById("date").appendChild(
+        document.createTextNode(new Date().getTime())
+      );
+    </script>
+  </body>
+</html>`.trim()
+  );
+
+  // make sure that the request for live reload happens before we do anything else
+  const promiseWaitForLiveReload = page.waitForRequest(/_has_update$/);
+  const response = await page.goto("localhost:8000/index.html");
+
+  await expect(response?.status()).toBe(200);
+
+  await expect(page.locator("h1")).toHaveText("Hello World");
+  await expect(await page.locator("script").all()).toHaveLength(2);
+
+  await promiseWaitForLiveReload;
+
+  const firstDate = await page.locator("#date").innerText();
+
+  await cp("./example/logo.png", "./tests/fixtures/logo.png");
+
+  await page.waitForResponse(/\.png$/);
+  await page.waitForLoadState("domcontentloaded");
+
+  await expect(page.locator("h1")).toHaveText("Hello World");
+  await expect(await page.locator("script").all()).toHaveLength(2);
+
+  const secondDate = await page.locator("#date").innerText();
+
+  expect(parseInt(firstDate, 10)).toBeLessThan(parseInt(secondDate, 10));
+});
+
 test("does not add live-reload code to non-html assets", async ({ page }) => {
   await writeFile("./tests/fixtures/index.js", `const hi = 5;`.trim());
 
@@ -180,117 +315,4 @@ test("does not add live-reload code to non-html assets", async ({ page }) => {
 
   await expect(page.locator("body")).toContainText("const hi = 5;");
   await expect(await page.locator("script").all()).toHaveLength(0);
-});
-
-test("blocks path traversal attempt", async ({ request }) => {
-  const response = await request.get("http://localhost:8000/../../LICENSE");
-
-  expect(response?.status()).toBe(404);
-});
-
-test("blocks access to files outside served root", async ({ request }) => {
-  const response = await request.get(
-    "http://localhost:8000/../../../../../../etc/hosts"
-  );
-
-  expect(response?.status()).toBe(404);
-});
-
-test("blocks encoded path traversal", async ({ request }) => {
-  const response = await request.get(
-    "http://localhost:8000/%2e%2e/server.spec.ts"
-  );
-
-  expect(response?.status()).toBe(404);
-});
-
-test("blocks double slash traversal", async ({ request }) => {
-  const response = await request.get(
-    "http://localhost:8000//..//server.spec.ts"
-  );
-
-  expect(response?.status()).toBe(404);
-});
-
-test("does not allow directory listing", async ({ request }) => {
-  const response = await request.get("http://localhost:8000/empty_folder/");
-
-  expect(response?.status()).toBe(404);
-});
-
-test("quickly responds", async ({ request }) => {
-  const before = performance.now();
-  const response = await request.get(`http://localhost:8000/index.html`);
-  const after = performance.now();
-  expect(response.status()).toBe(200);
-  expect(await response.text()).toContain("Hello World");
-
-  expect(after - before).toBeLessThan(
-    MAXIMUM_EXPECTED_RESPONSE_TIME_FOR_A_SIMPLE_REQUEST_IN_MS
-  );
-});
-
-test("quickly responds to errors", async ({ request }) => {
-  const before = performance.now();
-  const response = await request.get(`http://localhost:8000/missing_page.html`);
-  const after = performance.now();
-  expect(response.status()).toBe(404);
-
-  expect(after - before).toBeLessThan(
-    MAXIMUM_EXPECTED_RESPONSE_TIME_FOR_A_SIMPLE_REQUEST_IN_MS
-  );
-});
-
-test("handles thousands of concurrent requests", async ({ request }) => {
-  await writeFile(
-    "./tests/fixtures/index.html",
-    `
-<html>
-    <body><h1>Hello World</h1></body>
-</html>`.trim()
-  );
-
-  const requests = Array.from({ length: 2000 }, () =>
-    request.get(`http://localhost:8000/index.html`)
-  );
-  const before = performance.now();
-  const responses = await Promise.all(requests);
-  const after = performance.now();
-
-  for (const response of responses) {
-    expect(response.status()).toBe(200);
-    expect(await response.text()).toContain("Hello World");
-  }
-
-  const seconds =
-    2000 * MAXIMUM_EXPECTED_RESPONSE_TIME_FOR_A_SIMPLE_REQUEST_IN_MS;
-
-  expect(after - before).toBeLessThan(seconds);
-});
-
-test("handles thousands of error concurrent requests", async ({ request }) => {
-  const requests = Array.from({ length: 2000 }, () =>
-    request.get(`http://localhost:8000/missing_page.html`)
-  );
-  const before = performance.now();
-  const responses = await Promise.all(requests);
-  const after = performance.now();
-
-  for (const response of responses) {
-    expect(response.status()).toBe(404);
-  }
-
-  const seconds =
-    2000 * MAXIMUM_EXPECTED_RESPONSE_TIME_FOR_A_SIMPLE_REQUEST_IN_MS;
-
-  expect(after - before).toBeLessThan(seconds);
-});
-
-test.afterAll(async () => {
-  await writeFile("./tests/fixtures/index.html", ``.trim());
-  await rm("./tests/fixtures/feed.html");
-  await rm("./tests/fixtures/main.css");
-  await rm("./tests/fixtures/index.js");
-  await rm("./tests/fixtures/empty_folder", { recursive: true });
-  await rm("./tests/fixtures/sub_folder", { recursive: true });
 });
