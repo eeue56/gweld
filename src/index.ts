@@ -2,7 +2,7 @@
 
 import { execSync } from "child_process";
 import { createReadStream, watch } from "fs";
-import { readdir, readFile } from "fs/promises";
+import { readdir, readFile, stat } from "fs/promises";
 import * as http from "http";
 import { resolve } from "path";
 import { Readable } from "stream";
@@ -92,10 +92,29 @@ const mimeTypeCache: Map<ResolvedPath, string> = new Map();
  */
 function getMimeType(filePath: string): string {
   if (!mimeTypeCache.has(filePath)) {
-    mimeTypeCache.set(
-      filePath,
-      execSync(`file --mime-type -b ${filePath}`).toString().trim()
-    );
+    const extension = filePath.split(".").pop();
+
+    switch (extension) {
+      case "css": {
+        mimeTypeCache.set(filePath, "text/css");
+        break;
+      }
+      case "html": {
+        mimeTypeCache.set(filePath, "text/html");
+        break;
+      }
+      case "js": {
+        mimeTypeCache.set(filePath, "application/javascript");
+        break;
+      }
+      default: {
+        mimeTypeCache.set(
+          filePath,
+          execSync(`file --mime-type -b ${filePath}`).toString().trim()
+        );
+        break;
+      }
+    }
   }
 
   return mimeTypeCache.get(filePath) as string;
@@ -354,9 +373,7 @@ async function main() {
     res.setHeader("Keep-Alive", 10);
     res.statusCode = 200;
 
-    const mimeType = resolvedPath.endsWith("html")
-      ? "text/html"
-      : getMimeType(resolvedPath);
+    const mimeType = getMimeType(resolvedPath);
     res.setHeader("Content-Type", mimeType);
 
     try {
@@ -364,6 +381,40 @@ async function main() {
         res.setHeader("Cache-Control", "10");
         const file = await readFile(resolvedPath);
         Readable.from(file).pipe(res);
+        return console.timeEnd(label);
+      } else if (mimeType.includes("video")) {
+        const range = req.headers.range;
+
+        // if there's no range, fall back to just serve the entire file
+        //... but if we have a range, let's chunk it
+        if (!range) {
+          res.setHeader("Cache-Control", "10");
+          const file = await readFile(resolvedPath);
+          Readable.from(file).pipe(res);
+          return console.timeEnd(label);
+        }
+
+        const videoSize = (await stat(resolvedPath)).size;
+        const CHUNK_SIZE = 1000 * 1000;
+
+        // get rid of any of the bytes= parts
+        const start = parseInt(range.replace(/\D/, ""), 10) || 0;
+        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+        // Create headers
+        const contentLength = end - start + 1;
+        const headers = {
+          "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": contentLength,
+          "Content-Type": mimeType,
+        };
+
+        // HTTP Status 206 for Partial Content
+        res.writeHead(206, headers);
+
+        createReadStream(resolvedPath, { start, end }).pipe(res);
+
         return console.timeEnd(label);
       }
 
