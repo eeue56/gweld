@@ -47,7 +47,3 @@ Intended for when working with pure client-side applications.
 # Name
 
 Gweld is the Welsh for "watch". Gweld is part of the [Hiraeth collection](https://github.com/eeue56/hiraeth).
-
-```
-
-```
