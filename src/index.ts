@@ -107,6 +107,10 @@ function getMimeType(filePath: string): string {
         mimeTypeCache.set(filePath, "application/javascript");
         break;
       }
+      case "mp4": {
+        mimeTypeCache.set(filePath, "video/mp4");
+        break;
+      }
       default: {
         mimeTypeCache.set(
           filePath,
@@ -398,8 +402,10 @@ async function main() {
         const CHUNK_SIZE = 1000 * 1000;
 
         // get rid of any of the bytes= parts
-        const start = parseInt(range.replace(/\D/, ""), 10) || 0;
+        const start = Number(range.replace(/\D/g, ""));
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+        console.log("Start, end", range, start, end);
 
         // Create headers
         const contentLength = end - start + 1;
@@ -409,6 +415,8 @@ async function main() {
           "Content-Length": contentLength,
           "Content-Type": mimeType,
         };
+
+        console.log("headers");
 
         // HTTP Status 206 for Partial Content
         res.writeHead(206, headers);
