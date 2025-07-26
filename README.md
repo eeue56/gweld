@@ -1,6 +1,13 @@
 # gweld
 
-A very minimal SimpleHttpServer/http.server alternative in Node.js with live-reload.
+A minimal SimpleHttpServer/http.server alternative in Node.js with live-reload.
+
+Supports:
+
+- "Smart" live-reloading to trigger when an request file is changed (i.e reload index.html if it uses main.css, and main.css changes)
+- ESM-imports client-side
+- Video streaming
+- Very quick
 
 # Install
 
