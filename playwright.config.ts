@@ -33,13 +33,35 @@ export default defineConfig({
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
     },
+
+    {
+      name: "chromium-empty",
+      testMatch: "empty-folder.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    {
+      name: "firefox-empty",
+      testMatch: "empty-folder.spec.ts",
+      use: { ...devices["Desktop Firefox"] },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "node --experimental-strip-types src/index.ts tests/fixtures 8000",
-    url: "http://localhost:8000/",
-    reuseExistingServer: false,
-    stderr: "ignore",
-  },
+  webServer: [
+    {
+      command:
+        "node --experimental-strip-types src/index.ts tests/fixtures 8000",
+      url: "http://localhost:8000/",
+      reuseExistingServer: false,
+      stderr: "ignore",
+    },
+    {
+      command:
+        "node --experimental-strip-types src/index.ts tests/fixtures/empty 8012",
+      url: "http://localhost:8012/",
+      reuseExistingServer: false,
+      stderr: "ignore",
+    },
+  ],
 });

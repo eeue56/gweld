@@ -31,7 +31,7 @@ test("blocks double slash traversal", async ({ request }) => {
 });
 
 test("does not allow directory listing", async ({ request }) => {
-  const response = await request.get("http://localhost:8000/empty_folder/");
+  const response = await request.get("http://localhost:8000/empty_sub_folder/");
 
   expect(response?.status()).toBe(404);
 });

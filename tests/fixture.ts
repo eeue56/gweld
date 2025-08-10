@@ -16,12 +16,13 @@ export const test = base.extend({
 
 async function beforeAll() {
   await mkdir("tests/fixtures", { recursive: true });
-  await mkdir("tests/fixtures/empty_folder", { recursive: true });
+  await mkdir("tests/fixtures/empty_sub_folder", { recursive: true });
   await mkdir("tests/fixtures/sub_folder", { recursive: true });
   await writeFile("./tests/fixtures/index.html", ``.trim());
   await writeFile("./tests/fixtures/main.css", ``.trim());
   await writeFile("./tests/fixtures/index.js", ``.trim());
   await writeFile("./tests/fixtures/feed.html", ``.trim());
+  await rm("./tests/fixtures/empty/index.html", { force: true });
 }
 
 async function afterAll() {
@@ -30,8 +31,9 @@ async function afterAll() {
   await rm("./tests/fixtures/main.css", { force: true });
   await rm("./tests/fixtures/index.js", { force: true });
   await rm("./tests/fixtures/logo.png", { force: true });
-  await rm("./tests/fixtures/empty_folder", { recursive: true });
+  await rm("./tests/fixtures/empty_sub_folder", { recursive: true });
   await rm("./tests/fixtures/sub_folder", { recursive: true });
+  await rm("./tests/fixtures/empty/index.html", { force: true });
 }
 
 export const expect = test.expect;

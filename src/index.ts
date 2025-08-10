@@ -34,6 +34,15 @@ function addLiveUpdateToHtml(html: string): string {
   );
 }
 
+const defaultHtmlIfIndexMissing = addLiveUpdateToHtml(`
+<html>
+  <body>
+    <h1>gweld landing page</h1>
+    <div>No index.html found yet, try adding one</div>
+  </body>
+</html>
+`);
+
 /**
  * Make text green for the cli
  */
@@ -355,14 +364,6 @@ async function main() {
       return console.timeEnd(label);
     }
 
-    if (!filesKnownToExist.has(resolvedPath)) {
-      console.error("File not found", red(resolvedPath));
-      res.setHeader("Content-Length", 0);
-      res.statusCode = 404;
-      res.end();
-      return console.timeEnd(label);
-    }
-
     const otherReferers =
       internal_filesThatReferredAConnection.get(resolvedPath);
 
@@ -372,6 +373,23 @@ async function main() {
       internal_filesThatReferredAConnection.set(resolvedPath, [
         normalizedReferer,
       ]);
+    }
+
+    if (!filesKnownToExist.has(resolvedPath)) {
+      if (url.pathname === "/index.html") {
+        res.setHeader("Keep-Alive", 10);
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/html");
+        res.write(defaultHtmlIfIndexMissing);
+        res.end();
+        return console.timeEnd(label);
+      }
+
+      console.error("File not found", red(resolvedPath));
+      res.setHeader("Content-Length", 0);
+      res.statusCode = 404;
+      res.end();
+      return console.timeEnd(label);
     }
 
     res.setHeader("Keep-Alive", 10);
