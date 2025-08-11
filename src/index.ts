@@ -120,6 +120,9 @@ function getMimeType(filePath: string): string {
         mimeTypeCache.set(filePath, "video/mp4");
         break;
       }
+      case "ttf": {
+        mimeTypeCache.set(filePath, "font/ttf");
+      }
       default: {
         mimeTypeCache.set(
           filePath,
