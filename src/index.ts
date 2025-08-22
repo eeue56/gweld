@@ -123,6 +123,9 @@ function getMimeType(filePath: string): string {
       case "ttf": {
         mimeTypeCache.set(filePath, "font/ttf");
       }
+      case "woff2": {
+        mimeTypeCache.set(filePath, "font/woff2");
+      }
       default: {
         mimeTypeCache.set(
           filePath,
@@ -402,7 +405,7 @@ async function main() {
     res.setHeader("Content-Type", mimeType);
 
     try {
-      if (mimeType.includes("image")) {
+      if (mimeType.includes("image") || mimeType.includes("font")) {
         res.setHeader("Cache-Control", "10");
         const file = await readFile(resolvedPath);
         Readable.from(file).pipe(res);
