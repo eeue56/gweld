@@ -271,6 +271,10 @@ async function main() {
     });
 
     for (const fileOrFolder of subFilesAndFolders) {
+      // ignore node_modules to avoid diving too deep
+      if (fileOrFolder.parentPath.includes("node_modules")) {
+        continue;
+      }
       if (fileOrFolder.isFile()) {
         const resolved = resolve(fileOrFolder.parentPath, fileOrFolder.name);
         filesKnownToExist.add(resolved);
