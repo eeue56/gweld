@@ -326,8 +326,10 @@ async function main() {
       return console.timeEnd(label);
     }
 
+    const host = req.headers["host"] || `localhost:${port}`;
+
     // avoid parsing urls ourselves, just use URL
-    const url = new URL(`http://localhost:${port}${req.url}`);
+    const url = new URL(`http://${host}${req.url}`);
 
     const referer = req.headers.referer || url.toString();
 
