@@ -1,6 +1,6 @@
 {
   "name": "@eeue56/gweld",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A very minimal SimpleHttpServer alternative in Node.js with live-reload",
   "main": "dist/index.js",
   "bin": {
