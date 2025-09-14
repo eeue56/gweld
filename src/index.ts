@@ -558,7 +558,7 @@ async function main() {
 
   const server = http.createServer(requestListener);
 
-  server.listen(port, "::", () => {
+  server.listen(port, () => {
     console.log(`Listening on port ${port}...`);
   });
 
