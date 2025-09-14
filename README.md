@@ -35,7 +35,6 @@ Intended for when working with pure client-side applications.
 
 - Serve .html files with live refresh (if any files in the dir change, reload)
 - Serve other files as normal chunked files
-- Uses brotili by default
 - Uses only Node stdlib
 
 # Why

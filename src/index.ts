@@ -6,7 +6,6 @@ import { readdir, readFile, stat } from "fs/promises";
 import * as http from "http";
 import { resolve } from "path";
 import { Readable } from "stream";
-import { createBrotliCompress } from "zlib";
 
 /**
  * The code that is injected into HTML response to provide live-reload
@@ -450,21 +449,16 @@ async function main() {
         return console.timeEnd(label);
       }
 
-      const brotliCompress = createBrotliCompress();
-      res.setHeader("Transfer-Encoding", "chunked");
-      res.setHeader("Content-Encoding", "br");
-
       if (mimeType === "text/html") {
         const file = await readFile(resolvedPath, "utf-8").then(
           addLiveUpdateToHtml
         );
 
-        Readable.from(file).pipe(brotliCompress).pipe(res);
+        Readable.from(file).pipe(res);
         return console.timeEnd(label);
       } else {
         const readStream = createReadStream(resolvedPath, "utf-8");
-        const compressed = readStream.pipe(brotliCompress);
-        compressed.pipe(res);
+        readStream.pipe(res);
         return console.timeEnd(label);
       }
     } catch (e) {
