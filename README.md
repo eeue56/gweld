@@ -29,6 +29,12 @@ or via npx
 npx @eeue56/gweld <folder> [PORT]
 ```
 
+To take a guess at which file you want to open in the browser, use the `--guess` flag. It will look for the most recently modified file in `<folder>` and give a clickable link in the terminal.
+
+```
+gweld <folder> [PORT] --guess
+```
+
 # What
 
 Intended for when working with pure client-side applications.

@@ -138,6 +138,29 @@ function getMimeType(filePath: string): string {
   return mimeTypeCache.get(filePath) as string;
 }
 
+async function mostRecentlyChangedFile(
+  files: Set<string>
+): Promise<string | null> {
+  let mostRecentlyChangedFileName: string | null = null;
+
+  let timeChange: number = 0;
+
+  for (const file of files) {
+    if (!file.endsWith(".html")) {
+      continue;
+    }
+
+    const fileModifiedAt = (await stat(file)).mtimeMs;
+
+    if (fileModifiedAt > timeChange) {
+      mostRecentlyChangedFileName = file;
+      timeChange = fileModifiedAt;
+    }
+  }
+
+  return mostRecentlyChangedFileName;
+}
+
 /**
  * specific headers for event streams
  */
@@ -192,7 +215,7 @@ function sendReloadMessages(
 async function main() {
   if (process.argv.length < 3) {
     console.error("Not enough arguments!");
-    console.log(`Usage: @eeue56/gweld folder [PORT]`);
+    console.log(`Usage: @eeue56/gweld folder [PORT] [--guess]`);
     return;
   }
 
@@ -212,6 +235,14 @@ async function main() {
       );
       console.error("Exiting...");
       process.exit();
+    }
+  }
+
+  let guessMode: boolean = false;
+
+  if (process.argv.length > 4) {
+    if ("--guess" === process.argv[4]) {
+      guessMode = true;
     }
   }
 
@@ -560,8 +591,24 @@ async function main() {
 
   const server = http.createServer(requestListener);
 
-  server.listen(port, () => {
+  server.listen(port, async () => {
     console.log(`Listening on port ${port}...`);
+
+    if (guessMode) {
+      const mostRecent = await mostRecentlyChangedFile(filesKnownToExist);
+      if (mostRecent) {
+        const withoutStart = mostRecent.replace(folderToWatch, "");
+        console.log(`Guessing that you want to open`, mostRecent);
+
+        const blue = (str: string) => `\x1b[34m${str}\x1b[0m`;
+        const underline = (str: string) => `\x1b[4m${str}\x1b[0m`;
+
+        console.log(
+          "Click here =====>",
+          underline(blue(`http://localhost:${port}${withoutStart}`))
+        );
+      }
+    }
   });
 
   /**
