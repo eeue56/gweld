@@ -112,7 +112,7 @@ function getMimeType(filePath: string): string {
         break;
       }
       case "js": {
-        mimeTypeCache.set(filePath, "application/javascript");
+        mimeTypeCache.set(filePath, "text/javascript");
         break;
       }
       case "mp4": {
@@ -121,15 +121,48 @@ function getMimeType(filePath: string): string {
       }
       case "ttf": {
         mimeTypeCache.set(filePath, "font/ttf");
+        break;
       }
       case "woff2": {
         mimeTypeCache.set(filePath, "font/woff2");
+        break;
+      }
+      case "svg": {
+        mimeTypeCache.set(filePath, "image/svg+xml");
+        break;
+      }
+      case "jpg":
+      case "jpeg": {
+        mimeTypeCache.set(filePath, "image/jpeg");
+        break;
+      }
+      case "png": {
+        mimeTypeCache.set(filePath, "image/png");
+        break;
+      }
+      case "gif": {
+        mimeTypeCache.set(filePath, "image/gif");
+        break;
+      }
+      case "webp": {
+        mimeTypeCache.set(filePath, "image/webp");
+        break;
       }
       default: {
-        mimeTypeCache.set(
-          filePath,
-          execSync(`file --mime-type -b ${filePath}`).toString().trim()
-        );
+        try {
+          mimeTypeCache.set(
+            filePath,
+            execSync(`file --mime-type -b ${filePath}`).toString().trim(),
+          );
+        } catch (e) {
+          console.error(
+            "Error calling `file` for",
+            filePath,
+            "falling back to application/octet-stream",
+          );
+          console.error("Install `file` for accurate mime type detection");
+          mimeTypeCache.set(filePath, "application/octet-stream");
+        }
         break;
       }
     }
