@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { createReadStream, watch } from "fs";
 import { readdir, readFile, stat } from "fs/promises";
 import * as http from "http";
@@ -152,7 +152,9 @@ function getMimeType(filePath: string): string {
         try {
           mimeTypeCache.set(
             filePath,
-            execSync(`file --mime-type -b ${filePath}`).toString().trim(),
+            execFileSync(`file`, [`--mime-type`, `-b`, `${filePath}`])
+              .toString()
+              .trim(),
           );
         } catch (e) {
           console.error(
