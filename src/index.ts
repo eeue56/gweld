@@ -29,7 +29,7 @@ const liveCode = `
 function addLiveUpdateToHtml(html: string): string {
   return html.replace(
     "</body>",
-    `<script type="text/javascript">${liveCode}</script></body>`
+    `<script type="text/javascript">${liveCode}</script></body>`,
   );
 }
 
@@ -156,11 +156,13 @@ function getMimeType(filePath: string): string {
           );
         } catch (e) {
           console.error(
-            "Error calling `file` for",
+            `Error calling ${red("file")} for`,
             filePath,
             "falling back to application/octet-stream",
           );
-          console.error("Install `file` for accurate mime type detection");
+          console.error(
+            `Install ${red("file")} for accurate mime type detection`,
+          );
           mimeTypeCache.set(filePath, "application/octet-stream");
         }
         break;
@@ -172,7 +174,7 @@ function getMimeType(filePath: string): string {
 }
 
 async function mostRecentlyChangedFile(
-  files: Set<string>
+  files: Set<string>,
 ): Promise<string | null> {
   let mostRecentlyChangedFileName: string | null = null;
 
@@ -213,7 +215,7 @@ const eventStreamHeaders = {
 function cleanupClosedConnections(
   closedConnectionIds: Set<number>,
   eventSourceConnections: Map<ConnectionId, Connection>,
-  connectionsByUrlPath: Map<UrlPath, Set<ConnectionId>>
+  connectionsByUrlPath: Map<UrlPath, Set<ConnectionId>>,
 ) {
   for (const closedId of closedConnectionIds) {
     eventSourceConnections.delete(closedId);
@@ -232,7 +234,7 @@ function cleanupClosedConnections(
  */
 function sendReloadMessages(
   uniqueConnectionIds: Set<ConnectionId>,
-  eventSourceConnections: Map<ConnectionId, Connection>
+  eventSourceConnections: Map<ConnectionId, Connection>,
 ): void {
   for (const connectionId of uniqueConnectionIds) {
     const connection = eventSourceConnections.get(connectionId);
@@ -264,7 +266,7 @@ async function main() {
       console.error(
         "You gave",
         process.argv[3],
-        "as the port. It's not a number."
+        "as the port. It's not a number.",
       );
       console.error("Exiting...");
       process.exit();
@@ -349,7 +351,7 @@ async function main() {
   console.log(
     "Watching",
     green(folderToWatch),
-    `(${filesKnownToExist.size} files)...`
+    `(${filesKnownToExist.size} files)...`,
   );
 
   /**
@@ -369,7 +371,7 @@ async function main() {
    */
   async function requestListener(
     req: http.IncomingMessage,
-    res: http.ServerResponse<http.IncomingMessage>
+    res: http.ServerResponse<http.IncomingMessage>,
   ): Promise<null> {
     connectionCountId++;
 
@@ -517,7 +519,7 @@ async function main() {
 
       if (mimeType === "text/html") {
         const file = await readFile(resolvedPath, "utf-8").then(
-          addLiveUpdateToHtml
+          addLiveUpdateToHtml,
         );
 
         Readable.from(file).pipe(res);
@@ -593,7 +595,7 @@ async function main() {
 
         processedPaths.push(fullPath);
         urlPaths.push(
-          ...(internal_filesThatReferredAConnection.get(resolved) || [])
+          ...(internal_filesThatReferredAConnection.get(resolved) || []),
         );
       }
 
@@ -617,9 +619,9 @@ async function main() {
       cleanupClosedConnections(
         uniqueConnectionIds,
         internal_eventSourceConnections,
-        internal_connectionsByUrlPath
+        internal_connectionsByUrlPath,
       );
-    }
+    },
   );
 
   const server = http.createServer(requestListener);
@@ -638,7 +640,7 @@ async function main() {
 
         console.log(
           "Click here =====>",
-          underline(blue(`http://localhost:${port}${withoutStart}`))
+          underline(blue(`http://localhost:${port}${withoutStart}`)),
         );
       }
     }
